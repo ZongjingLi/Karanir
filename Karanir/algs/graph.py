@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+from .ds import *
 
 class Graph:
     def __init__(self,nodes, edges, node_attrs = None, edge_attrs = None):

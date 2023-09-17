@@ -23,7 +23,5 @@ class Treap:
         return -1
 
     def top(self, k = None):
-        if k is not None:
-            return self.data[:k]
-        else:
-            return self.data[0]
+        if k is not None:return self.data[:k]
+        else:return self.data[0]

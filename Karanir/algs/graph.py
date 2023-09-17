@@ -101,14 +101,16 @@ class GridGraph(Graph):
         if dtype == "manhattan":
             self.metric = manhattan_disance
 
-    def render(self, sequence = None, color_map = None):
+    def render(self, sequence = None, cmap = None):
         color_map = np.zeros([self.width, self.height])
         print(self.node_attributes[(0,0)])
-        if "height" in self.node_attributes[(0,0)]:
+        if cmap is not None or "height" in self.node_attributes[(0,0)]:
             for name in self.node_attributes:
                 node_attr = self.node_attributes[name]
                 pos = node_attr["pos"]
-                color_map[pos[0]][pos[1]] = node_attr["height"]
+                if color_map is not None:
+                    color_map[pos[0]][pos[1]] = cmap(node_attr)
+                else: color_map[pos[0]][pos[1]] = node_attr["height"]
         for edge in sequence:
             u,v = edge
             plt.plot([v[1], u[1]], [v[0],u[0]], c="red")

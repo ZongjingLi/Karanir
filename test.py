@@ -1,6 +1,21 @@
 from Karanir.algs.graph import *
 import matplotlib.pyplot as plt
 
+from Karanir.dklearn import *
+
+fcb = FCBlock(132,2,3,2,activation = "nn.Sigmoid()")
+fcb = FCBlock(132,2,3,2,
+        activation = [
+            "nn.Sigmoid()",
+            "nn.Tanh()",
+            "nn.Sigmoid()",
+            "nn.Sigmoid()",
+        ])
+
+inputs = torch.randn([10,3])
+outputs = fcb(inputs)
+print(inputs.shape, outputs.shape, outputs.max(), outputs.min())
+
 gridworld = GridGraph(16,32)
 
 def test_metric(a,b):

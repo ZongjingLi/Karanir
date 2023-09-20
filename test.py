@@ -12,10 +12,15 @@ fcb = FCBlock(132,2,3,2,
             "nn.Sigmoid()",
             "nn.Sigmoid()",
         ])
+convnet = ConvolutionUnits(3, 32)
+
+inputs = torch.randn([4,3,128,128])
+outputs = convnet(inputs)
+print(inputs.shape, outputs.shape)
 
 inputs = torch.randn([10,3])
 outputs = fcb(inputs)
-print(inputs.shape, outputs.shape, outputs.max(), outputs.min())
+print(inputs.shape, outputs.shape)
 
 gridworld = GridGraph(16,32)
 

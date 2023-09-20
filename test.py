@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from Karanir.dklearn import *
 
+fcb = FCBlock(132,2,3,2)
 fcb = FCBlock(132,2,3,2,activation = "nn.Sigmoid()")
 fcb = FCBlock(132,2,3,2,
         activation = [

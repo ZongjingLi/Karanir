@@ -3,9 +3,7 @@ import random
 import re
 import time
 import weakref
-
 import torch
-
 
 class Singleton(type):
     _instances_with_args_kwargs = {}

@@ -1,4 +1,6 @@
 
+EPS = 1e-6
+
 numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 yes_or_no = ["yes", "no"]
 

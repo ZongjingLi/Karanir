@@ -1,4 +1,8 @@
-from .os import *
+
 from .colors import *
-from .vocab import *
+from .functional import *
+from .geometry import *
+from .misc import *
+from .os import *
 from .tensor import *
+from .vocab import *

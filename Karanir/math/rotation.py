@@ -1,7 +1,32 @@
 import numpy as np
+import torch
 
 def rotate(theta, phi):
     return np.cos(theta) * np.sin(phi)
+
+def rotx(t):
+    return torch.tensor([
+        [1.,     0.,       0.           ],
+        [0.,     np.cos(t), -np.sin(t)  ],
+        [0.,     np.sin(t), np.cos(t),  ]
+    ]).float()
+
+def roty(t):
+    return torch.tensor([
+        [np.cos(t),      0.,            np.sin(t)],
+        [0.,             1.,            0,       ],
+        [-np.sin(t),     0,             np.cos(t)],
+    ]).float()
+
+def rotz(t):
+    return torch.tensor([
+        [np.cos(t), -np.sin(t), 0],
+        [np.sin(t), np.cos(t),  0],
+        [0,         0,          1],
+    ]).float()
+
+def euler_rot(tx,ty,tz):
+    return torch.matmul(torch.matmul(rotx(tx),roty(ty)),rotz(tz))
 
 def so2(t, homogenous = False):
     """

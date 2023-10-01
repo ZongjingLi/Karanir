@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 
 from Karanir.dklearn import *
 
+from Karanir.utils import save_im
+
+save_im(torch.randn([64,64,3]).float().clamp(0.0,1.0).detach().numpy())
+
 fcb = FCBlock(132,2,3,2)
 fcb = FCBlock(132,2,3,2,activation = "nn.Sigmoid()")
 fcb = FCBlock(132,2,3,2,

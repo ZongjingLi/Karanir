@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 class ConvolutionUnits(nn.Module):
-    def __init__(self, input_dim, output_dim, latent_dim = 128):
+    def __init__(self, input_dim, output_dim, latent_dim = 128, num_convs = 3):
         super().__init__()
-        num_convs = 2
+
         self.pre_conv = nn.Conv2d(input_dim, latent_dim, 5, 1, 2)
         self.conv_modules = nn.ModuleList([
             nn.Conv2d(latent_dim, latent_dim, 5, 1, 2) for _ in range(num_convs)

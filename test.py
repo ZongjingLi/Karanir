@@ -1,9 +1,9 @@
-from Karanir.algs.graph import *
+from karanir.algs.graph import *
 import matplotlib.pyplot as plt
 
-from Karanir.dklearn import *
+from karanir.dklearn import *
 
-from Karanir.utils import save_im
+from karanir.utils import save_im
 
 save_im(torch.randn([64,64,3]).float().clamp(0.0,1.0).detach().numpy())
 

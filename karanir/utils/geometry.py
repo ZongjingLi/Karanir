@@ -94,6 +94,7 @@ def lift(x, y, z, intrinsics, homogeneous=False):
     :param intrinsics:
     :return:
     '''
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     fx, fy, cx, cy = parse_intrinsics(intrinsics)
     for v in [fx,fy,cx,cy,x,y,z]:
       v = v.to(device)
@@ -108,7 +109,6 @@ def lift(x, y, z, intrinsics, homogeneous=False):
 
 def project(x, y, z, intrinsics):
     '''
-
     :param self:
     :param x: Shape (batch_size, num_points)
     :param y:
@@ -116,6 +116,7 @@ def project(x, y, z, intrinsics):
     :param intrinsics:
     :return:
     '''
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     fx, fy, cx, cy = parse_intrinsics(intrinsics)
     fx, fy, cx, cy = parse_intrinsics(intrinsics)
     for v in [fx,fy,cx,cy,x,y,z]:

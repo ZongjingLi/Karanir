@@ -2,7 +2,7 @@
 # @Author: Meleko
 # @Date:   2023-10-11 05:13:46
 # @Last Modified by:   Melkor
-# @Last Modified time: 2023-10-12 09:31:33
+# @Last Modified time: 2023-11-12 14:49:39
 
 import math
 import torch
@@ -14,6 +14,9 @@ class PersistentHomology:
 		"""
 		class of Persistent Homology
 		"""
+		self.eps = eps
+		self.k = 3
+
 		assert points.shape[1] in [2,3], print("spatial dim of TDA must be 2 or 3")
 		self.points = points
 
@@ -26,6 +29,20 @@ class PersistentHomology:
 	@staticmethod
 	def homology(points, edges):
 		return 0.0
+
+	def fit(self, points):
+		self.graph = buildGraph(points, self.eps)
+		self.ripsComplex = ripsFiltration(self.graph,k = self.k)
+
+	def transform(self, points):
+		intervals = 0
+		persistence = 0
+
+		return persistence
+
+	def fit_transform(self, points):
+		self.fit(points)
+		return self.transform(points)
 
 
 def build_edges(points, threshold, soft = False):

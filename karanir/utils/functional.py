@@ -5,6 +5,25 @@ import time
 import weakref
 import torch
 
+def create_meshgrid(H, W, device):
+    """
+    create the mesh grid with size (H,W) on the device
+    return the grid with (H,W,2)
+    """
+    Xs = torch.linspace(0, 1, H)
+    Ys = torch.linspace(0, 1, W)
+    xs, ys = torch.meshgrid([Xs,Ys])
+    grid = torch.cat([xs.unsqueeze(-1), ys.unsqueeze(-1)], dim = -1)
+    return grid
+
+def get_fourier_feature(grid, term = 7):
+    output_feature = []
+    for k in range(term):
+        output_feature.append(torch.sin(grid * (k + 1)))
+        output_feature.append(torch.cos(grid * (k + 1)))
+    output_feature = torch.cat(output_feature, dim = -1)
+    return output_feature
+
 class Singleton(type):
     _instances_with_args_kwargs = {}
 

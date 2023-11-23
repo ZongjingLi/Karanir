@@ -2,8 +2,6 @@ from karanir.thanagor import *
 
 KFT = KaranirThanagor("The Domain")
 
-print(KFT)
-
 from karanir.thanagor.types import *
 from karanir.thanagor.program import *
 
@@ -66,26 +64,59 @@ f0 = Primitive("0.", treal, 0)
 real = Primitive("REAL", treal, None)
 fpi = Primitive("pi", treal, 3.14)
 
+# Type Specification of ObjectSet, Attribute, Boolean and other apsects
+
 ObjectSet = baseType("ObjectSet")
 Attribute = baseType("Attribute")
 Boolean = baseType("Boolean")
+Concept = baseType("Concept")
 
 def _Exists(objset):
-    return torch.max(objset["end"])
+    return torch.max(objset["end"] ** 2)
 
 def _Filter(x):
     return lambda y: print(x["end"],y)
 
 
-red = Primitive("red", Attribute, "red_color")
+color = Primitive("color", Concept, "color")
+red = Primitive("red", Concept, "red")
+green = Primitive("green",Concept, "green")
+blue = Primitive("blue",Concept, "blue")
+
+shape = Primitive("shape", Attribute, "shape")
+circle = Primitive("circle", Concept, "circle")
+square = Primitive("square", Concept, "square")
 
 tfilter = Primitive("Filter",arrow(ObjectSet, Attribute, ObjectSet), _Filter)
 tExists = Primitive("Exists",arrow(ObjectSet, Boolean), _Exists)
 
 p = Program.parse("(+ 1 $0)")
 p = Program.parse("(Exists $0)")
-p = Program.parse("(Filter $0 red)")
+#p = Program.parse("(Filter $0 red)")
+
 #p = Program.parse("#(lambda (?? (+ 1 $0)) )")
 context = 1
-context = {"end":torch.tensor([0.9,.7,.5]), "features":torch.randn([3,32]), "executor":None}
+end_scores = nn.Parameter(torch.tensor([0.9,.7,.5,0.9,0.6]))
+context = {"end":end_scores, "features":torch.randn([3,32]), "executor":None}
 print(p, p.evaluate({0:context}))
+
+params = [{"params":end_scores}]
+optim = torch.optim.Adam(params, lr = 1e-1)
+history = []
+for epoch in range(32):
+    loss = p.evaluate({0:context})
+
+    history.append(end_scores.detach().unsqueeze(0).clone())
+    optim.zero_grad()
+    loss.backward()
+    optim.step()
+
+scores = torch.cat(history, dim = 0)
+
+
+import matplotlib.pyplot as plt
+fig = plt.figure("visualize track", figsize = (8,2))
+
+ax = fig.add_subplot(111)
+ax.imshow(scores.detach().permute(1,0).numpy())
+plt.show()

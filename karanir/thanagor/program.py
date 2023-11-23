@@ -20,7 +20,6 @@ class ParseFailure(Exception):
 import inspect
 
 
-
 class Curried:
     def __init__(self, f, arguments=None, arity=None):
         if arity is None:

@@ -6,6 +6,7 @@
  # @ Description: This file is distributed under the MIT license.
  '''
 
+from calendar import c
 from dataclasses import dataclass
 from webbrowser import get
 from karanir.thanagor.types import *
@@ -95,4 +96,34 @@ def run_heuristic_search(
         prioirty, node = hq.heappop(queue)
         if node.g > max_depth:
             raise RuntimeError()
-    return 
+        if check_goal(node.state):
+            return backtrace_plan(node, num_expansions)
+        num_expansions += 1
+        for action, child_state, cost in get_succesors(node.state):
+            if check_visited and child_state in visited:
+                continue
+            child_node = SearchNode(state = child_state, parent=node, action=action, cost=cost, g = node.g)
+            push_node(child_node)
+    
+    raise RuntimeError("Failed to find a plan (maximum expansion reached)")
+
+def backtrace_plan(node: SearchNode, num_expansions: int):
+    """Backtrace the plan from the goal node
+
+    Args:
+        node: a search node where the goal is satisfied.
+        num_expansions: the number of expansions. This value will be returned by this function.
+
+    Returns:
+        a tuple of (state_sequence, action_sequence, cost_sequence, num_expansions).
+    """
+    state_sequence = []
+    action_sequence = []
+    cost_sequence = []
+    while node.parent is not None:
+        state_sequence.insert(0, node.state)
+        action_sequence.insert(0, node.action)
+        cost_sequence.insert(0, node.cost)
+        node = node.parent
+    state_sequence.insert(0, node.state)
+    return state_sequence, action_sequence, cost_sequence, num_expansions

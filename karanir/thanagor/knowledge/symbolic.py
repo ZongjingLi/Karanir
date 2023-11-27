@@ -181,9 +181,6 @@ class Filter(SymbolicProgram):
 
         return pdf[idx]#/ pdf.sum(dim = 0)
 
-
-
-
 class Relate(SymbolicProgram):
 
     def __init__(self, *args):

@@ -1,7 +1,8 @@
 
-class Domain(object):
-    def __init__(self,file):
-        super().__init__()
+class DomainBase(object):
+    name : str
+    """The name of the domain"""
 
-    def parse(self):
-        return
+    def __init__(self, domain_str):
+        self.attributes = 0
+        self.relations = 0

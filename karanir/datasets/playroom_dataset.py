@@ -14,7 +14,7 @@ import shutil
 import logging
 
 class PlayroomDataset(Dataset):
-    def __init__(self, training, args, frame_idx=0, dataset_dir = './datasets/Playroom'):
+    def __init__(self, training, args, frame_idx=0, dataset_dir = './datasets/Playroom', flow = False):
 
         self.training = training
         self.frame_idx = frame_idx
@@ -31,7 +31,7 @@ class PlayroomDataset(Dataset):
 
         if args.precompute_flow: # precompute flows for training and validation dataset
             self.file_list = glob.glob(os.path.join(dataset_dir, 'images', 'model_split_*', '*')) # glob.glob(os.path.join(dataset_dir, 'images', 'model_split_[0-9]*', '*[0-8]')) #+ \
-
+        self.flow = flow
 
     def __len__(self):
         return len(self.file_list)
@@ -47,7 +47,11 @@ class PlayroomDataset(Dataset):
         segment_colors = read_image(self.get_image_path(file_name.replace('/images/', '/segments/'), frame_idx))
         gt_segment = self.process_segmentation_color(segment_colors, file_name)
 
+        img1 = img1.permute(1,2,0)
+        img2 = img2.permute(1,2,0)
         ret = {'img1': img1, 'img2': img2, 'gt_segment': gt_segment}
+
+        if not self.flow: return ret
 
         if not self.args.compute_flow and not self.args.precompute_flow:
             flow_path = os.path.join(file_name.replace('/images/', '/flows/'), f'frame{frame_idx}.npy')

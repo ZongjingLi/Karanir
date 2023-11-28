@@ -6,7 +6,7 @@ KFT = KaranirThanagor("The Domain")
 
 import sys
 
-from karanir.thanagor.domains.vqa_prmitives import *
+from karanir.thanagor.domains.vqa_primitives import *
 
 # [Color category concepts]
 color = Primitive("color", Concept, "color")
@@ -45,7 +45,7 @@ params = [{"params":executor.parameters()}]
 optim = torch.optim.Adam(params, lr = 0.01)
 history = []
 
-epochs = 30000
+epochs = 3000
 itrs = epochs // 10
 for epoch in range(epochs):
     loss = 0.0
@@ -59,7 +59,7 @@ for epoch in range(epochs):
     out = p.evaluate({0:context})["end"]
     loss -= out[2] - out[3:].sum() - out[:2].sum()
 
-    p = Program.parse("(Relate $0 $0 right)")
+    p = Program.parse("(Relate $0 $0 left)")
     out = p.evaluate({0:context})["end"]
     loss -= out[1][2] - out[0].sum() - out[2:].sum() - out[1][:2].sum() - out[1][3:].sum()
 

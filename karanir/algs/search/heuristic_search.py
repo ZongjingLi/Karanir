@@ -16,8 +16,8 @@ import heapq as hq
 
 __all__ = ['SearchNode', 'QueueNode', 'run_heuristic_search', 'backtrace_plan']
 
-State = baseType("State")
-Action = baseType("Action")
+State = TypeVar("State")
+Action = TypeVar("Action")
 
 @dataclass
 class SearchNode(object):
@@ -62,7 +62,7 @@ def run_heuristic_search(
     init_state: State,
     check_goal: Callable[[State], bool],
     get_priority: Callable[[State, int], float],
-    get_succesors: Callable[[State], Iterator[Tuple[Action, State, float]]],
+    get_successors: Callable[[State], Iterator[Tuple[Action, State, float]]],
     check_visited: bool = True,
     max_expansions: int = 10000,
     max_depth: int = 1000
@@ -99,23 +99,23 @@ def run_heuristic_search(
         if check_goal(node.state):
             return backtrace_plan(node, num_expansions)
         num_expansions += 1
-        for action, child_state, cost in get_succesors(node.state):
+        for action, child_state, cost in get_successors(node.state):
             if check_visited and child_state in visited:
                 continue
-            child_node = SearchNode(state = child_state, parent=node, action=action, cost=cost, g = node.g)
+            child_node = SearchNode(state = child_state, parent=node, action=action, cost=cost, g = node.g + cost)
             push_node(child_node)
     
     raise RuntimeError("Failed to find a plan (maximum expansion reached)")
 
-def backtrace_plan(node: SearchNode, num_expansions: int):
-    """Backtrace the plan from the goal node
+def backtrace_plan(node: SearchNode, nr_expansions: int) -> Tuple[List[State], List[Action], List[float], int]:
+    """Backtrace the plan from the goal node.
 
     Args:
         node: a search node where the goal is satisfied.
-        num_expansions: the number of expansions. This value will be returned by this function.
+        nr_expansions: the number of expansions. This value will be returned by this function.
 
     Returns:
-        a tuple of (state_sequence, action_sequence, cost_sequence, num_expansions).
+        a tuple of (state_sequence, action_sequence, cost_sequence, nr_expansions).
     """
     state_sequence = []
     action_sequence = []

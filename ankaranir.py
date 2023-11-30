@@ -20,10 +20,30 @@ for sample in loader:
     break;
 
 import matplotlib.pyplot as plt
-fig = plt.figure("compare")
-for i,k in enumerate(sample):
-    ax = fig.add_subplot(1,3,i+1)
-    ax.imshow(sample[k][0])
-#plt.show()
+
+def visualize_sample(sample, fig_name = "visualize sample"):
+    fig = plt.figure(fig_name)
+    for i,k in enumerate(sample):
+        ax = fig.add_subplot(1,3,i+1)
+        ax.imshow(sample[k][0])
+    plt.show()
 
 from karanir.algs.search import run_heuristic_search
+from karanir.algs.search.configuration_space import ProblemSpace
+
+import karanir.thanagor.domain as dom
+from karanir.thanagor.dsl.vqa_primitives import *
+
+from lark import Lark, Tree, Transformer, v_args
+
+with open("ankaranir.icstruct") as struct_file:
+    domain_string = ""
+    for line in struct_file: domain_string += line
+    
+domain = dom.load_domain_string(domain_string)
+print(domain.pretty())
+
+context = {"end": logit(torch.ones(7))}
+p = Program.parse("(Count $0)")
+
+print(p.evaluate({0:context})["end"])

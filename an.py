@@ -6,7 +6,7 @@ KFT = KaranirThanagor("The Domain")
 
 import sys
 
-from karanir.thanagor.domains.vqa_primitives import *
+from karanir.thanagor.dsl.vqa_primitives import *
 
 # [Color category concepts]
 color = Primitive("color", Concept, "color")

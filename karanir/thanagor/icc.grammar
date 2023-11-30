@@ -1,0 +1,131 @@
+start: definition | expr
+
+definition: "(" "define" definition_decl supp_definitions ")"
+
+definition_decl: "(" definition_type definition_name ")"
+?definition_type: VARNAME
+?definition_name: VARNAME
+
+supp_definitions: supp_definition* supp_definition
+?supp_definition: predicates_definition
+                | types_definition
+                | action_definition
+                | axiom_definition
+                | derived_definition
+
+//types
+types_definition: "(" ":" "types" type_definition+ ")"
+type_definition: VARNAME
+
+//predicate
+predicates_definition: "(" ":" "predicates" predicate_definition+ ")"
+predicate_definition: "(" predicate_name allvariable* ")"
+predicate_name: CONSTNAME ("[" decorator_kwargs "]")?
+
+//actions
+action_definition: "(" ":" "action" action_name action_parameters action_precondition action_effect ")"
+action_name: VARNAME ("[" decorator_kwargs "]")?
+action_parameters: ":" "parameters" "(" allvariable* ")"
+action_precondition: ":" "precondition" expr_function_call
+action_effect: ":" "effect" expr_function_call
+
+// derived_definition
+derived_definition: "(" ":" "derived" derived_signature expr_function_call ")"
+derived_signature: "(" derived_name allvariable* ")"
+derived_name: VARNAME ("[" decorator_kwargs "]")?
+
+// axioms
+axiom_definition: "(" ":" "axiom" axiom_decorator axiom_vars axiom_context axiom_implies ")"
+axiom_decorator: ("[" decorator_kwargs "]")?
+axiom_vars: (":" "vars" "(" allvariable* ")")?
+axiom_context: ":" "context" expr_function_call
+axiom_implies: ":" "implies" expr_function_call
+
+
+//variables and constants
+VARIABLE: "?" VARNAME | "??"
+variable: VARIABLE
+CONSTANT: CONSTNAME
+constant: CONSTANT
+typedvariable: variable "-" object_type_name_unwrapped
+typedconstant: constant "-" object_type_name_unwrapped
+
+?allconstant: constant | typedconstant
+?allvariable: variable | typedvariable
+
+// slots
+slot: SLOT slot_name ("[" decorator_kwargs "]")?
+slot_name: VARNAME
+SLOT: "??"
+
+// variable name
+%import common.LETTER
+%import common.DIGIT
+
+// literal types
+?literal: bool | number | string | list
+TRUE: "true"
+FALSE: "false"
+bool: TRUE | FALSE
+%import common.INT
+int: INT
+%import common.SIGNED_NUMBER
+float: SIGNED_NUMBER
+?number: int | float
+%import common.ESCAPED_STRING
+string: ESCAPED_STRING
+list: "[" "]"
+    | "[" literal ("," literal)* "]"
+
+
+// type name
+type_name: VARNAME
+object_type_name: type_name
+value_type_name: type_name | vector_type_name
+vector_type_name: "vector" "[" value_type_name "," vector_type_size vector_type_choices ("," decorator_kwargs)? "]"
+vector_type_choices: ("," vector_type_size)?
+?vector_type_size: int
+
+object_type_name_unwrapped: object_type_name
+value_type_name_unwrapped: value_type_name
+
+// decorators
+decorator_kwargs: decorator_kwarg ("," decorator_kwarg)*
+decorator_kwarg: decorator_k "=" decorator_v
+decorator_k:VARNAME
+decorator_v:literal
+
+// expression
+?expr_function_call: function_call | quantified_function_call | conditional_function_call | pm_function_call
+?expr: variable | constant | expr_function_call
+
+function_call: "(" (function_name|method_name) expr* ")"
+simple_function_call: "(" (function_name|method_name) " " (variable | constant)* ")"
+function_name: VARNAME | slot
+method_name: VARNAME SCOPE_SEP VARNAME
+SCOPE_SEP: "::"
+
+EXISTS: "exists"
+FORALL: "forall"
+IOTA: "iota"
+FOREACH: "foreach"
+?quantifier: EXISTS | FORALL | IOTA | FOREACH
+quantified_function_call : "(" quantifier "(" typedvariable ")" expr ")"
+conditional_function_call : "(" "cond" expr + ")"
+
+PLUS: "+"
+MINUS: "-"
+
+?pm_function_call_sign: PLUS | MINUS
+pm_function_call: pm_function_call_sign simple_function_call
+
+VARNAME: ("_" | LETTER )("_" | "-" | LETTER | DIGIT)*
+CONSTNAME: ("_" | LETTER) ("_"|"-"|"#"|":"|LETTER|DIGIT)*
+
+%import common.WS
+%ignore WS
+
+%import common.NEWLINE
+COMMENT: ";" /(.)*/ NEWLINE
+//       | "#" /(.)+/ NEWLINE
+%ignore COMMENT

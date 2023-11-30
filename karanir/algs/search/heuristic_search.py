@@ -6,7 +6,6 @@
  # @ Description: This file is distributed under the MIT license.
  '''
 
-from calendar import c
 from dataclasses import dataclass
 from webbrowser import get
 from karanir.thanagor.types import *

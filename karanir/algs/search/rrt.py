@@ -89,3 +89,32 @@ class RRTTree(object):
                 best_value = distance
                 best_node = node
         return best_node
+
+def smooth_path(pspace, path, num_attempts = 100, use_fine_path: bool = False):
+    if use_fine_path:
+        path = get_smooth_path(pspace, path)
+
+    for i in range(num_attempts):
+        if len(path) <= 2:
+            break;
+        # use the uniform pair sampling method
+        a, b = np.random.randint(0, len(path) - 1), np.random.randint(0, len(path) - 1)
+        if a > b:
+            a, b = b, a + 1
+        else:
+            b = b + 1
+        if use_fine_path:
+            success, _, subpath = pspace.try_extend_path(path[a], path[b])
+            if success:
+                path = path[:a + 1] + subpath[1:] + path[b:]
+        else:
+            if pspace.validate_path(path[a], path[b]):
+                path = path[:a + 1] + path[b:]        
+    return path
+
+def get_smooth_path(pspace, path):
+    cpath = [path[0]]
+    for config in path[1:]:
+        cpath.extend(pspace.cspace.gen_path(cpath[-1], config)[1][1:])
+    path = cpath
+    return path

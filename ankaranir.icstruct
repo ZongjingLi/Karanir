@@ -1,17 +1,22 @@
 (define
 	(domain blocks-world)
-	(:types block color)
+	(:types 
+		block
+		color - vector[float32, 128]
+		pose - vector[float32, 2]
+	)	
 
 	(:predicates
 		(is-red ?x - color)
 		(is-green ?x - color)
 		(is-blue ?x - color)
+		(pose ?t - tile)
 	)
 
 	(:predicates
 		(clear ?x - block) ;; no block is on x
 		(on ?x - block ?y - block) ;; is block x on y
-		(robot-holding ?x - block) ;; the robot is hlding x
+		(robot-holding ?x - block ) ;; the robot is hlding x
 	)
 
 	(:action pick
@@ -24,5 +29,11 @@
 	 :parameters (?x - block ?y - block)
 	 :precondition (and (robot-holding ?x) (clear ?y))
 	 :effect (and (robot-handfree) (not robot-holding ?x) (not clear ?y) (clear ?x) (on ?x ?y) )
+	)
+
+	(:action place-pose
+	 :parameters (?x - block ?y - pose)
+	 :precondition (true)
+	 :effect (and (pose::asssign ?x ?y))
 	)
 )

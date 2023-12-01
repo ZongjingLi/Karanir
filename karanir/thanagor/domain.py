@@ -22,13 +22,20 @@ class DomainBase(object):
         """load a domain or problem string and return the corresponding tree."""
         return self.lark.parse(string)
 
+    def make_domain(self, parse_tree):
+        return 
+
 _icc_parser_ = DomainBase()
 
 def load_domain_file(filename: str):
-    return _icc_parser_.load(filename)
+    tree = _icc_parser_.load(filename)
+    domain = _icc_parser_.make_domain(tree)
+    return domain
 
 def load_domain_string(domain_string: str):
-    return _icc_parser_.loads(domain_string)
+    tree = _icc_parser_.loads(domain_string)
+    domain = _icc_parser_.make_domain(tree)
+    return domain
 
 def parse_domain_string(domain_string):
     return domain_string

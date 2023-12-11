@@ -44,6 +44,9 @@ class CentralExecutor(nn.Module):
         self.entailment = build_entailment(config)
         self.concept_registry = build_box_registry(config)
 
+        # [Types]
+        #self.types = domain.types
+
         # [Word Vocab]
         self.concept_dict = {
             "color":["red","green","blue"],

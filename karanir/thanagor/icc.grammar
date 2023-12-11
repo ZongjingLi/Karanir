@@ -7,26 +7,42 @@ definition_decl: "(" definition_type definition_name ")"
 ?definition_name: VARNAME
 
 supp_definitions: supp_definition* supp_definition
-?supp_definition: predicates_definition
-                | types_definition
-                | action_definition
-                | axiom_definition
-                | derived_definition
+?supp_definition: extends_defition
+               | requirements_definition
+               | types_definition
+               | constants_definition
+               | predicates_definition
+               | feature_definition
+               | predicate_group_definition
+               | action_definition
+               | axiom_definition
+               | derived_definition
+               | generator_definition
+               | problem_domain_definition
+               | objects_definition
+               | init_definition
+               | goal_definition
 
-//types
+// extends
+extends_defition: "(" ":" "extends" domain_name+ ")"
+domain_name: VARNAME
+
+// requirements
+requirements_definition: "(" ":" "requirements" requirement_name+ ")"
+requirement_name: ":" VARNAME
+
+// types
 types_definition: "(" ":" "types" type_definition+ ")"
 type_definition: object_type_name+ "-" parent_type_name | object_type_name+
 parent_type_name: object_type_name | value_type_name
 
-//predicate
+// constants
+constants_definition: "(" ":" "constants" allconstant+ ")"
+
+// predicates
 predicates_definition: "(" ":" "predicates" predicate_definition+ ")"
 predicate_definition: "(" predicate_name allvariable* ")"
 predicate_name: CONSTNAME ("[" decorator_kwargs "]")?
-
-// predicate group
-predicate_group_definition: "(" ":" "predicate-group" predicate_group_name predicate_name* ")"
-predicate_group_name: VARNAME
-
 
 // features
 feature_definition: "(" ":" "feature" feature_name feature_parameters feature_output feature_expr ")"
@@ -35,17 +51,16 @@ feature_parameters: ":" "parameters" "(" allvariable* ")"
 ?feature_output: ":" "output" "(" value_type_name_unwrapped ")"
 feature_expr: (":" "expr" expr)?
 
-//actions
+// predicate group
+predicate_group_definition: "(" ":" "predicate-group" predicate_group_name predicate_name* ")"
+predicate_group_name: VARNAME
+
+// actions
 action_definition: "(" ":" "action" action_name action_parameters action_precondition action_effect ")"
 action_name: VARNAME ("[" decorator_kwargs "]")?
 action_parameters: ":" "parameters" "(" allvariable* ")"
 action_precondition: ":" "precondition" expr_function_call
 action_effect: ":" "effect" expr_function_call
-
-// derived_definition
-derived_definition: "(" ":" "derived" derived_signature expr_function_call ")"
-derived_signature: "(" derived_name allvariable* ")"
-derived_name: VARNAME ("[" decorator_kwargs "]")?
 
 // axioms
 axiom_definition: "(" ":" "axiom" axiom_decorator axiom_vars axiom_context axiom_implies ")"
@@ -53,6 +68,19 @@ axiom_decorator: ("[" decorator_kwargs "]")?
 axiom_vars: (":" "vars" "(" allvariable* ")")?
 axiom_context: ":" "context" expr_function_call
 axiom_implies: ":" "implies" expr_function_call
+
+// derived_definition
+derived_definition: "(" ":" "derived" derived_signature expr_function_call ")"
+derived_signature: "(" derived_name allvariable* ")"
+derived_name: VARNAME ("[" decorator_kwargs "]")?
+
+// generator definition
+generator_definition: "(" ":" "generator" generator_name generator_parameters generator_certifies generator_context generator_generates ")"
+generator_name: VARNAME ("[" decorator_kwargs "]")?
+generator_parameters: ":" "parameters" "(" allvariable* ")"
+generator_certifies: ":" "certifies" expr_function_call
+generator_context: ":" "context" expr_function_call
+generator_generates: ":" "generates" expr_function_call
 
 // objects
 objects_definition: "(" ":" "objects" object_definition* ")"
@@ -144,8 +172,6 @@ PLUS: "+"
 MINUS: "-"
 ?pm_function_call_sign: PLUS | MINUS
 pm_function_call: pm_function_call_sign simple_function_call
-
-domain_name: VARNAME
 
 %import common.WS
 %ignore WS

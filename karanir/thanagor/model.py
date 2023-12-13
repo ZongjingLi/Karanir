@@ -26,5 +26,8 @@ class KaranirThanagor(nn.Module):
         # [Planning, Reasoning Constuct]
         self.planer = None
 
+        # [Neuro Implementations]
+        self.implementations = nn.ModuleDict()
+
     def fit(self,data, task = None):
         return 

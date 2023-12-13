@@ -36,28 +36,38 @@ from karanir.thanagor.dsl.vqa_primitives import *
 
 from lark import Lark, Tree, Transformer, v_args
 
-with open("ankaranir.icstruct") as struct_file:
-    domain_string = ""
-    for line in struct_file: domain_string += line
 
-domain_string = r"""(define (domain blocks-world)
-    (:types
-        block - object
-        id - int64
-        color - object
+domain_string = text = """
+(domain blockworld)
+(:type
+    source - int
+    block
+    pos - vector[float, 3, 7] ;; the pos vector representation
+    category - vector[int, 4] ;; the category vector representation
+)
+(:predicate
+    clear ?x ?y
+    is-red ?x
+    is-blue ?x
+    is-green ?x
+)
+(:action-definitions
+    (
+        action: pickup
+        parameters: ?x ?y
+        precondition:and
+        effect:and
     )
-
-    (:predicates
-        (color ?x - block)
-        (is-red ?x - color)
-        (clear ?x - block)          ;; no block is on x
-        (on ?x - block ?y - block)  ;; x is on y
-        (robot-holding ?x - block)  ;; the robot is holding x
-        (robot-handfree)            ;; the robot is not holding anything
+    (
+        action: placeon
+        parameters: ?x ?y
+        precondition: holdingxandyisclear
+        effect: placesomethingonit
     )
-)"""
+)
+"""
 
-#print(domain_string)
+
 domain = dom.load_domain_string(domain_string)
 domain.print_summary()
 

@@ -33,4 +33,3 @@ class Effect:
     
     def __call__(self) -> bool:
         return 0
-

@@ -8,7 +8,7 @@ from .embedding  import build_box_registry
 from .entailment import build_entailment
 from karanir.utils import freeze
 from karanir.utils.misc import *
-from karanir.utils import *
+from karanir.thanagor.types import baseType
 
 class UnknownArgument(Exception):
     def __init__(self):super()
@@ -45,7 +45,15 @@ class CentralExecutor(nn.Module):
         self.concept_registry = build_box_registry(config)
 
         # [Types]
-        #self.types = domain.types
+        self.types = domain.types
+        for type_name in domain.types:
+            baseType(type_name)
+
+        # [Predicates]
+        self.predicates = domain.predicates
+
+        # [Actions]
+        self.actions = domain.actions
 
         # [Word Vocab]
         self.concept_dict = {

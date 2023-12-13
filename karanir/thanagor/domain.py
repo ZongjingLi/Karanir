@@ -3,7 +3,7 @@ import os
 from lark import Lark, Tree, Transformer, v_args
 from typing import Set, Tuple, Dict, List, Sequence, Union, Any
 
-from .planner import State, Precondition, Effect
+from .knowledge import State, Precondition, Effect
 
 class Domain:
     grammar_file = os.path.join(os.path.dirname(__file__), 'icc.grammar')
@@ -46,13 +46,14 @@ class Domain:
             precondtion: the precondition evaluation function as a binary expression
             effect: the effect expression, notice the predicate could be more than binary
         """
-        print("define")
+        #print("define")
+        pass
 
     def load_domain_string(self, domain_string):
         pass
     
     def print_summary(self):
-        print(f"\ndomain:\n  {self.domain_name}")
+        print(f"domain:\n  {self.domain_name}")
         print("types:")
         for key in self.types:
             print(f"  {key} - {self.types[key]}")

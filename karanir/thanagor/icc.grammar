@@ -5,6 +5,7 @@ instruction: VARNAME
             | domain_definition
             | type_definitions
             | predicate_definitions
+            | constants_definition
             | action_definitions
             | VARIABLE
 
@@ -14,32 +15,47 @@ domain_definition: "(" "domain" VARNAME ")"
 // types definition group
 type_definitions: "(" ":" "type" type_definition+ ")"
 type_definition: object_type_name "-" parent_type_name | object_type_name
-object_type_name: VARNAME
+object_type_name: value_type_name | vector_type_name
 parent_type_name: object_type_name | vector_type_name
 
 // predicate definition group
 predicate_definitions: "(" ":" "predicate" predicate_definition+ ")"
-predicate_definition: predicate_name parameters
+predicate_definition: predicate_name parameters | predicate_name parameters "->" object_type_name
 predicate_name: VARNAME
 parameters: parameter+
-parameter: VARIABLE
+parameter: VARIABLE | typed_variable
+
+// constants definition group
+constants_definition: "(" ":" "constant" all_constant + ")"
+
 
 // action definition group
 action_definitions: "(" ":" "action-definitions" action_definition+ ")"
 action_definition: "(" "action" ":" action_name "parameters" ":" parameters "precondition" ":" precondition "effect" ":" effect ")"
 action_name: VARNAME
-precondition: VARNAME
-effect: VARNAME
+precondition: expr_function_call
+effect: expr_function_call
+
+// slots
+slot: SLOT slot_name
+slot_name: VARNAME
+SLOT: "??"
 
 // number type definition 
 NUMBER: ("0".."9")+ 
 FLOATNUMBER: NUMBER "." NUMBER
 
+constant: CONSTNAME
+typed_constant: constant "-" object_type_name
+?all_constant: constant | typed_constant
+
 // variable name format definition
 %import common.LETTER
 %import common.DIGIT
+variable: VARIABLE
 VARIABLE: "?" VARNAME | "??"
 VARNAME: ("_" | LETTER) ("_"|"-"|LETTER|DIGIT)*
+CONSTNAME: ("_" | LETTER) ("_"|"-"|"#"|":"|LETTER|DIGIT)*
 
 
 typed_variable: VARIABLE "-" object_type_name
@@ -56,11 +72,22 @@ vector_size: "," NUMBER
 
 // predefined data_type
 
+// expression function call type
+?expr_function_call: function_call 
+?expr: variable | constant | expr_function_call
+
+function_call: "(" (function_name | method_name) expr* ")"
+function_name: VARNAME | slot
+method_name: VARNAME SCOPE_SEP VARNAME
+
+SCOPE_SEP: "::"
+
 // primitive operation definition
 PLUS: "+"
 MINUS: "-"
 EXISTS: "exists"
 IOTA: "iota"
+?quantifier: EXISTS | IOTA
 
 WHITESPACE: (" " | "\n")+
 

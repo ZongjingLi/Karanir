@@ -2,8 +2,8 @@
 import os
 from lark import Lark, Tree, Transformer, v_args
 from typing import Set, Tuple, Dict, List, Sequence, Union, Any
-
-from .knowledge import State, Precondition, Effect
+from .knowledge import State, Precondition, Effect, Action
+from .types import baseType
 
 class Domain:
     grammar_file = os.path.join(os.path.dirname(__file__), 'icc.grammar')
@@ -35,8 +35,8 @@ class Domain:
         if parent_name is None: parent_name = "object"
         self.types[type_name] = parent_name
     
-    def define_predicate(self, predicate_name, parameters):
-        self.predicates[predicate_name] = {"name":predicate_name,"parameters":parameters}
+    def define_predicate(self, predicate_name, parameters, output_type):
+        self.predicates[predicate_name] = {"name":predicate_name,"parameters":parameters, "type":output_type}
     
     def define_action(self, action_name, parameters, precondition, effect):
         """ define symbolic action using the action name, parameters, preconditon and effect, the actual implementation is empty.
@@ -46,8 +46,7 @@ class Domain:
             precondtion: the precondition evaluation function as a binary expression
             effect: the effect expression, notice the predicate could be more than binary
         """
-        #print("define")
-        pass
+        self.actions[action_name] = Action(action_name, parameters, precondition, effect)
 
     def load_domain_string(self, domain_string):
         pass
@@ -61,7 +60,8 @@ class Domain:
         for key in self.predicates:
             predicate_name = self.predicates[key]["name"]
             parameters = self.predicates[key]["parameters"]
-            print(f"  {predicate_name}:{parameters}");
+            output_type = self.predicates[key]["type"]
+            print(f"  {predicate_name}:{parameters} -> {output_type}");
         print("actions:")
 
 
@@ -88,7 +88,8 @@ class ICCTransformer(Transformer):
     def predicate_definition(self, args):
         predicate_name = args[0]
         parameters = args[1]
-        self.domain.define_predicate(predicate_name, parameters)
+        output_type = "boolean" if len(args) == 2 else args[-1]
+        self.domain.define_predicate(predicate_name, parameters, output_type)
     
     def predicate_name(self, args):return str(args[0])
 
@@ -106,8 +107,17 @@ class ICCTransformer(Transformer):
         if len(args) == 1:self.domain.define_type(type_name)
         if len(args) == 2:self.domain.define_type(type_name, args[1])
     
+    def value_type_name(self, args):
+        return args[0]
+    
+    def type_name(self, args):
+        return str(args[0])
+  
     def parent_type_name(self, args):
         return args[0]
+    
+    def typed_variable(self, args):
+        return str(args[0]) + "-" + args[1]
     
     def vector_type_name(self, args):
         vector_choice = args[0]
@@ -130,11 +140,47 @@ class ICCTransformer(Transformer):
     )
     """
     def action_definition(self, args):
+        print(args[0])
+        print(args[1])
+        print(args[2])
+        print(args[3])
         self.domain.define_action(*args)
     
     def action_name(self, args): return str(args[0])
 
-    def precondition(self, args): return str(args[0])
+    def precondition(self, args): return args[0]
 
-    def effect(self, args): return str(args[0])
+    def effect(self, args): return args[0]
+
+    """
+    function and expression calls
+    """
+    def function_call(self, args):
+        return args
     
+    def function_name(self,args):
+        return str(args[0])
+    
+    def variable(self, args):
+        return str(args[0])
+    
+    def VARNAME(self, args):
+        return str(args)
+
+    def RULE(self, args):
+        return str(args[0])
+
+    def CONSTNAME(self, args):
+        return str(args)
+    
+    def constant(self, args):
+        return [str(arg) for arg in args]
+
+    """Handle the part where functions are slots"""
+    def slot(self,args):
+        return str(args[0] + args[1][0])
+    
+    def SLOT(self, args):return str(args)
+    
+    def slot_name(self,args):
+        return args

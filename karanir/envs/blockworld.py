@@ -8,9 +8,10 @@ import arcade
 import pymunk
 import timeit
 import math
+import numpy as np
 
-SCREEN_WIDTH = 428
-SCREEN_HEIGHT = 428
+SCREEN_WIDTH =  480
+SCREEN_HEIGHT = 360
 SCREEN_TITLE = "Shadows of Angrathar"
 
 class PhysicsSprite(arcade.Sprite):
@@ -120,6 +121,11 @@ class Game(arcade.Window):
 
         # Create the stacks of boxes
 
+        self.last_checkpoint_time = timeit.default_timer()
+        self.time_diff = 0.2
+        self.history_states = []
+        self.threshold = 100
+
     def on_draw(self):
         """
         Render the screen.
@@ -141,7 +147,7 @@ class Game(arcade.Window):
             pv1 = body.position + line.a.rotated(body.angle)
             pv2 = body.position + line.b.rotated(body.angle)
             arcade.draw_line(pv1.x, pv1.y, pv2.x, pv2.y, (39,45,52), 2)
-
+        #arcade.draw_rectangle_filled(self.graber_x,self.graber_y, 64, 64, [0,200,0])
 
         # Display timings
         display_time = False
@@ -195,11 +201,44 @@ class Game(arcade.Window):
             self.shape_being_dragged.shape.body.velocity = dx * 20, dy * 20
 
     def save_states(self):
+        threshold = self.threshold
+        nullary_predicates = []
+        unary_predicates = []
+        binary_predicates = []
+        edges = []
+
         for sprite in self.sprite_list:
-            #x = sprite.pymunk_shape.position.x
-            #y = sprite.pymunk_shape.position.y
-            #print(x,y)
-            print(sprite.file_name)
+            x, y = sprite.position
+            angle = sprite.angle
+            name = sprite.file_name.split("/")[-1].split(".")[0]
+            category = self.category_map[name]
+            unary_predicates.append(np.array([x, y, angle, category]))
+
+        # number of objects in the scene
+        num_obj = len(self.sprite_list)
+
+        dist_matrix = np.zeros([num_obj, num_obj])
+        adjs_matrix = np.zeros([num_obj, num_obj])
+        for i,sprite_x in enumerate(self.sprite_list):
+            x1, y1 = sprite_x.position
+            for j,sprite_y in enumerate(self.sprite_list):
+                x2, y2 = sprite_y.position
+                dist = np.linalg.norm(np.array([x1,y1]) - np.array([x2,y2]))
+                dist_matrix[i][j] = dist
+                if dist < threshold: # add an edge in the binary predicates
+                    edges.append([i,j])
+                    adjs_matrix[i][j] = 1.0
+        binary_predicates.append(dist_matrix)
+        binary_predicates.append(adjs_matrix)
+
+        # cast predicates to numpy file
+        nullary_predicates = np.array(nullary_predicates)
+        unary_predicates = np.array(unary_predicates)
+        binary_predicates = np.array(binary_predicates)
+        self.history_states.append(
+            [nullary_predicates, unary_predicates, binary_predicates]
+        )
+
 
     def on_key_press(self, symbol, modifiers):
         """Handle user keyboard input
@@ -214,6 +253,8 @@ class Game(arcade.Window):
         """
         if symbol == arcade.key.Q:
             # Quit immediately
+            states = self.history_states
+            np.save("states",states)
             arcade.close_window()
         step = 15
         if symbol == arcade.key.P:
@@ -232,7 +273,6 @@ class Game(arcade.Window):
             self.graber_x += step
 
     def on_update(self, delta_time):
-        start_time = timeit.default_timer()
 
         # Check for balls that fall off the screen
         for sprite in self.sprite_list:
@@ -259,11 +299,25 @@ class Game(arcade.Window):
             sprite.center_x = sprite.pymunk_shape.body.position.x
             sprite.center_y = sprite.pymunk_shape.body.position.y
             sprite.angle = math.degrees(sprite.pymunk_shape.body.angle)
+        
+        action_sprite = self.sprite_list[0]
+        action_sprite.center_x = action_sprite.pymunk_shape.body.position.x
+        action_sprite.center_y = action_sprite.pymunk_shape.body.position.y
+        action_sprite.angle = math.degrees(action_sprite.pymunk_shape.body.angle)
+
 
         # Save the time it took to do this.
-        self.processing_time = timeit.default_timer() - start_time
+        diff = self.processing_time = timeit.default_timer() - self.last_checkpoint_time
+        if diff > self.time_diff:
+            self.save_states()
+            self.last_checkpoint_time = timeit.default_timer()
+        
+    def set_checkpoint_timediff(self, time_diff):
+        """ set the time difference to save the states
+        """
+        self.time_diff = time_diff
 
-class AcherusEnv(Game):
+class BlockWorldEnv(Game):
     def __init__(self,width, height, title):
         super().__init__(width, height, title)
         arcade.set_background_color((0.0,10.0,20.0))
@@ -272,8 +326,19 @@ class AcherusEnv(Game):
         make_block(self, "iccblock", 280,80 + 32);
         make_block(self, "icctop", 180,80 + 32);
 
+        dx = (np.random.random() - 0.5) * 90
+        make_block(self, "icctop", 150 + dx,120 + 32 + 64*2);
+
+        # [Setup the Save States config]
+        self.category_map = {
+            "iccblock":1,
+            "icccraft":2,
+            "icctop":3,
+        }
+        self.set_checkpoint_timediff(0.2)
+
 def main():
-    game = AcherusEnv(SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_TITLE)
+    game = BlockWorldEnv(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
 
     game.save_states()
     arcade.run()

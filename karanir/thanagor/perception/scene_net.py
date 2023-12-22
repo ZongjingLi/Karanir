@@ -13,6 +13,11 @@ class SceneNet(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
+        """visual feature backbone, perform grid convolution"""
+
+        """edge connection encoder, decoder"""
+
+        """affinity samples and local indices"""
 
     def forward(self, x):
         return x

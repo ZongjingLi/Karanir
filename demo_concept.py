@@ -17,22 +17,26 @@ domain_string = text = """
 )
 (:predicate
     clear ?x ?y
-    is-red ?x
+    is-red ?x - block -> scourge
     is-blue ?x
     is-green ?x
+    velo ?x - block -> pos
+)
+(:constant
+    name-bool
 )
 (:action-definitions
     (
         action: pickup
         parameters: ?x ?y
-        precondition:and
-        effect:and
+        precondition: (and)
+        effect: (and)
     )
     (
         action: placeon
-        parameters: ?x ?y
-        precondition: holdingxandyisclear
-        effect: placesomethingonit
+        parameters: ?x - block ?y - block
+        precondition: (hold clear)
+        effect: (hold clear)
     )
 )
 """
@@ -45,7 +49,7 @@ from karanir.thanagor.knowledge import CentralExecutor
 from karanir.thanagor.model import KaranirThanagor, config
 KFT = KaranirThanagor(domain, config)
 
-KFT.print_summary()
+#KFT.print_summary()
 
 
 context = {

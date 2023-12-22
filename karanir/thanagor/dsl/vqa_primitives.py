@@ -25,6 +25,8 @@ def Exists(x):
 tExists = Primitive("Exists",arrow(ObjectSet, Boolean), Exists)
 
 # [Filter Attribute Concept]
+def _TypeFilter(outputs,concept,executor):
+    return 
 def Filter(objset):
     return lambda concept: {"end":torch.min(objset["end"],objset["executor"].entailment(objset["features"],
             objset["executor"].get_concept_embedding(concept)))}

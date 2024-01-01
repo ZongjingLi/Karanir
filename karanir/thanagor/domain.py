@@ -16,7 +16,11 @@ class Domain:
 
         self.predicates = {} # all the function call to the predicates stored, map from the name to actual type
 
+        self.derived = {}
+
         self.actions = {} # all the actions in the domain
+
+        self.type_constraints = {}
 
         """
         the actual implementations of the predicates and slots
@@ -48,8 +52,12 @@ class Domain:
         """
         self.actions[action_name] = Action(action_name, parameters, precondition, effect)
 
-    def load_domain_string(self, domain_string):
-        pass
+    def define_type_constraint(self,name,controls):
+        self.type_constraints[name] = list(controls)
+    
+    def define_derived(self, name, params, expr):
+        #print(name, params, expr)
+        self.derived[name] = {"parameters":params, "expr":expr}
     
     def print_summary(self):
         print(f"domain:\n  {self.domain_name}")
@@ -63,7 +71,13 @@ class Domain:
             output_type = self.predicates[key]["type"]
             print(f"  {predicate_name}:{parameters} -> {output_type}");
         print("actions:")
-
+        for key in self.actions:
+            atom_action = self.actions[key]
+            name = atom_action.action_name
+            params = atom_action.parameters
+            precond = str(atom_action.precondition)
+            effect = str(atom_action.effect)
+            print(f" name:{name}\n  params:{params}\n  precond:{precond}\n  effect:{effect}")
 
 _icc_parser = Domain()
 
@@ -72,6 +86,14 @@ def load_domain_string(domain_string):
     icc_transformer = ICCTransformer()
     icc_transformer.transform(tree)
     return icc_transformer.domain
+
+def to_lambda_expression(list):
+    if isinstance(list, str): return list
+    expr = f"({list[0]}"
+    for cont in list[1:]:
+        expr += " {}".format(to_lambda_expression(cont))
+    expr += ")"
+    return expr
 
 class ICCTransformer(Transformer):
     def __init__(self):
@@ -140,11 +162,14 @@ class ICCTransformer(Transformer):
     )
     """
     def action_definition(self, args):
-        print(args[0])
-        print(args[1])
-        print(args[2])
-        print(args[3])
-        self.domain.define_action(*args)
+        #print(args[0])
+        #print(args[1])
+        #print(args[2])
+        #print(args[3])
+
+        precond = to_lambda_expression(args[2])
+        effect = to_lambda_expression(args[3])
+        self.domain.define_action(args[0], args[1], precond, effect)
     
     def action_name(self, args): return str(args[0])
 
@@ -184,3 +209,27 @@ class ICCTransformer(Transformer):
     
     def slot_name(self,args):
         return args
+
+    """Functional Handler"""    
+    def functional_name(self, args):
+        return  str(args[0])
+    
+    def functional_definition(self, args):
+        functional_name = args[0]
+
+    """Type Constraints Definitions"""
+    def constraint_definition(self, args):
+        type_name = args[0]
+        arg_controls = args[1:]
+        self.domain.define_type_constraint(type_name, arg_controls)
+    
+    def derived_definition(self, args):
+        print(args)
+
+    """Derived predicates Definitions"""
+    def derived_definition(self, args):
+        self.domain.define_derived(args[0], args[1],to_lambda_expression(args[2]))
+    
+    def derived_name(self,args):
+        return str(args[0])
+    

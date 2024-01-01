@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from karanir.dklearn.nn import FCBlock
-
+from karanir.utils.tensor import logit
 
 class State:
     def __init__(self, data):
@@ -29,6 +29,8 @@ class Precondition:
     
     def __call__(self, bool_expression) -> bool:
         return 0
+    
+    def __str__(self): return str(self.bool_expression)
 
 class Effect:
     def __init__(self, bool_expression):
@@ -36,6 +38,8 @@ class Effect:
     
     def __call__(self) -> bool:
         return 0
+    
+    def __str__(self):return str(self.bool_expression)
     
     def split_effect(self):
         """split the effect into two parts. effect+, effect-
@@ -67,3 +71,28 @@ class Action:
     def apply(self, state):
         if self.precondition(state):
             return
+
+class PredicateFilter(nn.Module):
+    def __init__(self, concept, arity = 1):
+        super().__init__()
+        self.concept = concept
+    
+    def __str__(self): return self.concept
+
+    def __repr__(self): return self.__str__()
+    
+    def forward(self, x):
+        executor = x["executor"]
+        concept = self.concept
+        features = x["features"]
+
+        filter_logits = torch.zeros([1])
+        parent_type = executor.get_type(concept)
+        for candidate in executor.type_constraints[parent_type]:
+            filter_logits += executor.entailment(features,
+            executor.get_concept_embedding(candidate)).sigmoid()
+
+        div = executor.entailment(features,
+                executor.get_concept_embedding(concept)).sigmoid()
+        filter_logits = logit(div / filter_logits)
+        return{"end":filter_logits, "executor":x["executor"]}

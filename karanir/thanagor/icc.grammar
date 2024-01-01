@@ -6,7 +6,10 @@ instruction: VARNAME
             | type_definitions
             | predicate_definitions
             | constants_definition
+            | derived_definitions
             | action_definitions
+            | functional_definitions
+            | constraint_definitions
             | VARIABLE
 
 // domain definition
@@ -25,16 +28,30 @@ predicate_name: VARNAME
 parameters: parameter+
 parameter: VARIABLE | typed_variable
 
+// derived definition group
+derived_definitions: "(" ":" "derived" derived_definition+ ")"
+derived_definition: "(" derived_name parameters "expr" ":" expr_function_call ")"
+derived_name: VARNAME
+
 // constants definition group
 constants_definition: "(" ":" "constant" all_constant + ")"
 
 
 // action definition group
-action_definitions: "(" ":" "action-definitions" action_definition+ ")"
-action_definition: "(" "action" ":" action_name "parameters" ":" parameters "precondition" ":" precondition "effect" ":" effect ")"
+action_definitions: "(" ":" "action" action_definition+ ")"
+action_definition: "(" "name" ":" action_name "parameters" ":" parameters "precondition" ":" precondition "effect" ":" effect ")"
 action_name: VARNAME
 precondition: expr_function_call
 effect: expr_function_call
+
+// functional_definitions group
+functional_definitions: "(" ":" "functionals" functional_definition+ ")"
+functional_definition: "(" "functional" ":" functional_name ")"
+functional_name: VARNAME
+
+// constraints definitions group
+constraint_definitions: "(" ":" "constraint" constraint_definition+ ")"
+constraint_definition: "(" VARNAME ":" VARNAME+ ")"
 
 // slots
 slot: SLOT slot_name
@@ -54,7 +71,7 @@ typed_constant: constant "-" object_type_name
 %import common.DIGIT
 variable: VARIABLE
 VARIABLE: "?" VARNAME | "??"
-VARNAME: ("_" | LETTER) ("_"|"-"|LETTER|DIGIT)*
+VARNAME: ("_" | LETTER ) ("_"|"-"|LETTER|DIGIT)*
 CONSTNAME: ("_" | LETTER) ("_"|"-"|"#"|":"|LETTER|DIGIT)*
 
 
@@ -74,13 +91,17 @@ vector_size: "," NUMBER
 
 // expression function call type
 ?expr_function_call: function_call 
-?expr: variable | constant | expr_function_call
+?expr: variable | constant | expr_function_call | FLOATNUMBER | NUMBER
 
 function_call: "(" (function_name | method_name) expr* ")"
 function_name: VARNAME | slot
 method_name: VARNAME SCOPE_SEP VARNAME
 
 SCOPE_SEP: "::"
+
+TRUE: "true"
+FALSE: "false"
+bool: TRUE | FALSE
 
 // primitive operation definition
 PLUS: "+"

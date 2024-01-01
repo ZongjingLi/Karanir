@@ -4,6 +4,63 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from torch_sparse import SparseTensor
+
+from .misc import EPS
+
+def logit(x, eps = EPS): 
+    """Logit function that clampse the value using eps"""
+    x = x.clamp(eps, 1 - eps)
+    return torch.log(x / (1 - x))
+
+def expat(tens, idx, num):
+    target_shape = [1 for _ in range(1 + len(tens.shape))]
+    target_shape[idx] = num
+    tens = tens.unsqueeze(idx)
+    tens = tens.repeat(target_shape)
+    return tens
+
+def stats_summary(tens):
+    print("shape:{} max:{} min:{}".format(str(list(tens.shape)),tens.max(),tens.min()))
+
+def local_to_sparse_global_affinity(local_adj, sample_inds, activated=None, sparse_transpose=False):
+    """
+    Convert local adjacency matrix of shape [B, N, K] to [B, N, N]
+    :param local_adj: [B, N, K]
+    :param size: [H, W], with H * W = N
+    :return: global_adj [B, N, N]
+    """
+
+    B, N, K = list(local_adj.shape)
+
+    if sample_inds is None:
+        return local_adj
+
+    assert sample_inds.shape[0] == 3
+    local_node_inds = sample_inds[2] # [B, N, K]
+
+    batch_inds = torch.arange(B).reshape([B, 1]).to(local_node_inds)
+    node_inds = torch.arange(N).reshape([1, N]).to(local_node_inds)
+    row_inds = (batch_inds * N + node_inds).reshape(B * N, 1).expand(-1, K).flatten()  # [BNK]
+
+    col_inds = local_node_inds.flatten()  # [BNK]
+    valid = col_inds < N
+
+    col_offset = (batch_inds * N).reshape(B, 1, 1).expand(-1, N, -1).expand(-1, -1, K).flatten() # [BNK]
+    col_inds += col_offset
+    value = local_adj.flatten()
+
+    if activated is not None:
+        activated = activated.reshape(B, N, 1).expand(-1, -1, K).bool()
+        valid = torch.logical_and(valid, activated.flatten())
+
+    if sparse_transpose:
+        global_adj = SparseTensor(row=col_inds[valid], col=row_inds[valid],
+                                  value=value[valid], sparse_sizes=[B*N, B*N])
+    else:
+        raise ValueError('Current KP implementation assumes tranposed affinities')
+
+    return global_adj
 
 def apply(x, f):
     if torch.is_tensor(x):
@@ -155,3 +212,39 @@ def invert(x):
     y = torch.zeros_like(x)
     y[x] = torch.arange(len(x))
     return y
+
+def gather_tensor(tensor, sample_inds, invalid=0.):
+    # tensor is of shape [B, N, D]
+    # sample_inds is of shape [2, B, T, K] or [3, B, T, K]
+    # where the last column of the 1st dimension are the sample indices
+
+    _, N, D = tensor.shape
+    dim, B, T, K = sample_inds.shape
+
+
+    if dim == 2:
+        if sample_inds[-1].max() == N:
+            # special case: indices where idx == N is assigned zero
+            tensor = torch.cat([tensor, invalid * torch.ones([B, 1, D], device=tensor.device)], dim=1)
+
+        indices = sample_inds[-1].view(B, T * K).unsqueeze(-1).expand(-1, -1, D)
+        output = torch.gather(tensor, 1, indices).view([B, T, K, D])
+    elif dim == 3:
+        if sample_inds[-1].max() == D:
+            # special case: indices where idx == N is assigned zero
+            tensor = torch.cat([tensor, invalid * torch.ones([B, N, 1], device=tensor.device)], dim=2)
+            D = D + 1
+        elif sample_inds[1].max() == N:
+            # special case: indices where idx == N is assigned zero
+            tensor = torch.cat([tensor, invalid * torch.ones([B, 1, D], device=tensor.device)], dim=1)
+            N = N + 1
+
+        tensor = tensor.view(B, N * D)
+        node_indices = sample_inds[1].view(B, T * K)
+        sample_indices = sample_inds[2].view(B, T * K)
+        indices = node_indices * D + sample_indices
+        # print('in gather tensor: ', indices.max(), tensor.shape)
+        output = torch.gather(tensor, 1, indices).view([B, T, K])
+    else:
+        raise ValueError
+    return output

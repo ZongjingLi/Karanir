@@ -1,7 +1,7 @@
 from karanir.thanagor import *
 from karanir.thanagor.knowledge.executor import CentralExecutor
 
-KFT = KaranirThanagor(config, "The Domain")
+KFT = KaranirThanagor("The Domain", config)
 KFT.print_summary()
 
 

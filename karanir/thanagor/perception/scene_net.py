@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .propagation import GraphPropagatiown
+from .propagation import GraphPropagation
 from .competition import Competition
 
 from .backbone import *

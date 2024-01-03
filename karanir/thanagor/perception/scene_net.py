@@ -128,7 +128,7 @@ class SceneNet(nn.Module):
             if training:loss = self.compute_loss(connection_logits, gt_segments = seg)
         
         # [computer the segmentations]
-        masks, agents, alive = self.cpmpute_segment()
+        masks, agents, alive = self.compute_segments(connections[0], sample_inds)
         #prop_in = self.propagation()
         #masks, agents, alive, pheno, unharv = self.competition(prop_in)
         masks = 0

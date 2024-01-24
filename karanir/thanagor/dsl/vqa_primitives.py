@@ -18,22 +18,21 @@ Concept = baseType("Concept")
 Integer = baseType("Integer")
 CodeBlock = baseType("CodeBlock")
 
-from karanir.utils.tensor import logit
+# [Augumented Type Expression]
+Expression = baseType("Expression")
+BooleanExpression = baseType("BooleanExpression")
 
-def expat(tens, idx, num):
-    target_shape = [1 for _ in range(1 + len(tens.shape))]
-    target_shape[idx] = num
-    tens = tens.unsqueeze(idx)
-    tens = tens.repeat(target_shape)
-    return tens
+from karanir.utils.tensor import logit, expat
+
 
 # [Exist at Least one Element in the Set]
-def Exists(x): 
-    return {"end":torch.max(x["end"]), "executor":x["executor"]}
-tExists = Primitive("exists",arrow(ObjectSet, Boolean), Exists)
+t_exists = Primitive(
+    "exists",
+    arrow(ObjectSet, Boolean),
+    lambda x:{"end":torch.max(x["end"]), "executor":x["executor"]})
 
 # [Filter Attribute Concept]
-def _TypeFilter(objset,concept,executor):
+def type_filter(objset,concept,executor):
     filter_logits = torch.zeros_like(objset["end"])
     parent_type = executor.get_type(concept)
     for candidate in executor.type_constraints[parent_type]:
@@ -45,9 +44,20 @@ def _TypeFilter(objset,concept,executor):
     filter_logits = logit(div / filter_logits)
     return{"end":torch.min(objset["end"],filter_logits), "executor":objset["executor"]}
     
-def Filter(objset):
-    return lambda concept: _TypeFilter(objset, concept, objset["executor"])
-tFilter = Primitive("filter",arrow(ObjectSet, Concept, ObjectSet), Filter)
+"""This method will be deprecated soon, please use eFilter operator"""
+tFilter = Primitive(
+    "filter",
+    arrow(ObjectSet, Concept, ObjectSet),
+    lambda objset: lambda concept: type_filter(objset, concept, objset["executor"]))
+
+def expression_filter(objset, expr, executor):
+    expr_logits = executor.evaluate(expr, objset["features"])
+    return {"end":torch.min(objset["end"], expr_logits)}
+
+eFilter = Primitive(
+    "filter_expr()",
+    arrow(ObjectSet, BooleanExpression, ObjectSet),
+    lambda objset: lambda expr: expression_filter(objset, expr, objset["executor"]))
 
 def relate(x,y,z):
     EPS = 1e-6;
@@ -96,3 +106,8 @@ tOr = Primitive("or", arrow(Boolean, Boolean, Boolean), Or)
 
 tTrue = Primitive("true",Boolean,{"end":logit(torch.tensor(1.0))})
 tFalse = Primitive("false",Boolean,{"end":logit(torch.tensor(0.0))})
+
+tPr = Primitive("Pr", arrow(ObjectSet,Concept,ObjectSet),
+    lambda x: lambda y: {"logits":x["executor"].entailment(x["features"],
+            x["executor"].get_concept_embedding(y))}
+)

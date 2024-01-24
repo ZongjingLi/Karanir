@@ -72,6 +72,14 @@ class Action:
         if self.precondition(state):
             return
 
+class Expression(nn.Module):
+    def __init__(self, expression_nested):
+        super().__init__()
+        self.expression_nested = expression_nested
+    
+    def evaluate(self, inputs, executor):
+        return inputs
+
 class PredicateFilter(nn.Module):
     def __init__(self, concept, arity = 1):
         super().__init__()

@@ -8,6 +8,10 @@ from torch_sparse import SparseTensor
 
 from .misc import EPS
 
+class Id(nn.Module):
+    def __init__(self):super().__init__()
+    def forward(self,x):return x
+
 def logit(x, eps = EPS): 
     """Logit function that clampse the value using eps"""
     x = x.clamp(eps, 1 - eps)
@@ -248,3 +252,9 @@ def gather_tensor(tensor, sample_inds, invalid=0.):
     else:
         raise ValueError
     return output
+
+def weighted_softmax(x, weight):
+    maxes = torch.max(x, -1, keepdim=True)[0]
+    x_exp = torch.exp(x - maxes)
+    x_exp_sum = (torch.sum(x_exp * weight, -1, keepdim=True) + 1e-12)
+    return (x_exp / x_exp_sum) * weight

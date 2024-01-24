@@ -1,27 +1,9 @@
-from karanir.datasets.playroom_dataset import PlayroomDataset
-from torch.utils.data import DataLoader
+from karanir.logger import get_logger, set_output_file
 
-dataset_dir = "/Users/melkor/Documents/datasets/Playroom"
+set_output_file("logs/output_expr")
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("--compute_flow",           default = False)
-parser.add_argument("--precompute_flow",        default = False)
-args = parser.parse_args(args = [])
+logger = get_logger("MLK Expr")
 
-dataset = PlayroomDataset(True, args, dataset_dir = dataset_dir, flow = False)
-loader = DataLoader(dataset, batch_size = 2, shuffle = True)
-
-for sample in loader:
-    break;
-
-import matplotlib.pyplot as plt
-
-def visualize_sample(sample, fig_name = "visualize sample"):
-    fig = plt.figure(fig_name)
-    for i,k in enumerate(sample):
-        ax = fig.add_subplot(1,3,i+1)
-        ax.imshow(sample[k][0])
-    plt.show()
-
-visualize_sample(sample)
+logger.critical("Build the model")
+logger.warning("this is a custom warning.")
+logger.critical("What is the shape of that?")

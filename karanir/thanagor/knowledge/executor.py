@@ -78,8 +78,8 @@ class CentralExecutor(nn.Module):
             if arity not in self.predicates:
                 self.predicates[arity] = []
             
-            predicate_imp = PredicateFilter(predicate_name,arity)
-            self.predicates[arity].append(Primitive(predicate_name,arrow(Boolean, Boolean),predicate_imp))
+            #predicate_imp = PredicateFilter(predicate_name,arity)
+            self.predicates[arity].append(Primitive(predicate_name,arrow(Boolean, Boolean),predicate_name))
         
         # [Derived]
         self.derived = domain.derived
@@ -96,7 +96,12 @@ class CentralExecutor(nn.Module):
                 self.concept_vocab.append(predicate.name)
 
         """Neuro Component Implementation Registry"""
-        self.implement_registry = nn.ModuleDict()
+        self.implement_registry = {}
+        for implement_key in domain.implementations:
+            effect = domain.implementations[implement_key]
+            self.implement_registry[implement_key] = Primitive(implement_key,arrow(Boolean,Boolean),effect)
+
+        # copy the implementations from the registry
 
         # args during the execution
         self.kwargs = None 
@@ -105,6 +110,15 @@ class CentralExecutor(nn.Module):
 
         self.quantized = False
     
+    def check_implementation(self):
+        warning = False
+        for key in self.implement_registry:
+            func_call = self.implement_registry[key]
+            if func_call is None:warning = True
+        if warning:
+            print("Warning: exists predicates not implemented.")
+            return False
+ 
     def evaluate(self, program, context):
         """program as a string to evaluate under the context
         Args:
@@ -115,10 +129,10 @@ class CentralExecutor(nn.Module):
         flag = True in [derive in flat_string for derive in self.derived]
         itr = 0
         """Replace all the derived expression in the program with primitives, that means recusion are not allowed"""
-        while flag and itr < 10:
+        while flag and itr < 9999:
             itr += 1
             for derive_name in self.derived:
-                if not derive_name in flat_string: continue
+                if not "{} ".format(derive_name) in flat_string: continue
                 formal_params = self.derived[derive_name]["parameters"]
                 actual_params, start, end = get_params(flat_string, derive_name)
 
@@ -126,12 +140,11 @@ class CentralExecutor(nn.Module):
                 prefix = flat_string[:start];suffix = flat_string[end:]
                 flat_string = "{}{}{}".format(prefix,self.derived[derive_name]["expr"],suffix)
 
-                for i,p in enumerate(formal_params):flat_string = flat_string.replace(p, actual_params[i])
+                for i,p in enumerate(formal_params):flat_string = flat_string.replace(p.split("-")[0], actual_params[i])
             
             """until there are no more derived expression in the program"""
             flag = True in [derive in flat_string for derive in self.derived]
         program = Program.parse(flat_string)
-
         outputs = program.evaluate(context)
         return outputs
     
@@ -192,8 +205,10 @@ class CentralExecutor(nn.Module):
         return func
     """Automatically fill up predicates and other symmetry operations"""
     def auto_fillup(self):
-        for predicate in self.predicates:
-            pass
+        for arity in self.predicates:
+            print("arity:",arity)
+            for predicate in self.predicates[arity]:
+                print(predicate)
         return
     
     def get_type(self, concept):

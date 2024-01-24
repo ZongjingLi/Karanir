@@ -30,12 +30,11 @@ parameter: VARIABLE | typed_variable
 
 // derived definition group
 derived_definitions: "(" ":" "derived" derived_definition+ ")"
-derived_definition: "(" derived_name parameters "expr" ":" expr_function_call ")"
+derived_definition:  derived_name parameters "expr" ":" expr_function_call 
 derived_name: VARNAME
 
 // constants definition group
 constants_definition: "(" ":" "constant" all_constant + ")"
-
 
 // action definition group
 action_definitions: "(" ":" "action" action_definition+ ")"

@@ -5,6 +5,20 @@ from typing import Set, Tuple, Dict, List, Sequence, Union, Any
 from .knowledge import State, Precondition, Effect, Action
 from .types import baseType
 
+def carry_func_name(name,expr_nested):
+    output = []
+    slots = []
+    for pos in expr_nested:
+        if isinstance(pos, list):
+            carried, slot = carry_func_name(name,pos)
+            output.append(carried)
+            slots.extend(slot)
+        elif pos[:2] == "??":
+            output.append("{}-{}".format(name, pos[2:]))
+            slots.append("{}-{}".format(name, pos[2:]))
+        else: output.append(pos)
+    return output, slots
+
 class Domain:
     grammar_file = os.path.join(os.path.dirname(__file__), 'icc.grammar')
     def __init__(self):
@@ -57,8 +71,21 @@ class Domain:
     
     def define_derived(self, name, params, expr):
         #print(name, params, expr)
-        self.derived[name] = {"parameters":params, "expr":expr}
+        carry_name, slots = carry_func_name(name, expr)
+        expr_str = to_lambda_expression(carry_name)
+        #print(expr)
+        #self.register_slots(name, expr)
+        for slot in slots:
+            self.implementations[slot] = None
+        self.derived[name] = {"parameters":params, "expr":expr_str}
     
+    def register_slots(self, name, expr_list):
+        #TODO: write a version that transforms the lambda expr to nested list
+        assert isinstance(expr_list, list),"in the nested list form:{}".format(type(expr_list))
+        for pos in expr_list:
+            if isinstance(pos, list): [self.register_slots(name, slot) for slot in pos]
+            if pos[:2] == "??": self.implementations[name+"-"+pos[2:]] = None
+
     def print_summary(self):
         print(f"domain:\n  {self.domain_name}")
         print("types:")
@@ -78,6 +105,7 @@ class Domain:
             precond = str(atom_action.precondition)
             effect = str(atom_action.effect)
             print(f" name:{name}\n  params:{params}\n  precond:{precond}\n  effect:{effect}")
+        print(self.implementations)
 
 _icc_parser = Domain()
 
@@ -184,7 +212,7 @@ class ICCTransformer(Transformer):
         return args
     
     def function_name(self,args):
-        return str(args[0])
+        return args[0]
     
     def variable(self, args):
         return str(args[0])
@@ -222,13 +250,10 @@ class ICCTransformer(Transformer):
         type_name = args[0]
         arg_controls = args[1:]
         self.domain.define_type_constraint(type_name, arg_controls)
-    
-    def derived_definition(self, args):
-        print(args)
 
     """Derived predicates Definitions"""
     def derived_definition(self, args):
-        self.domain.define_derived(args[0], args[1],to_lambda_expression(args[2]))
+        self.domain.define_derived(args[0], args[1],args[2])
     
     def derived_name(self,args):
         return str(args[0])

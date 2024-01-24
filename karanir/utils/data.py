@@ -18,3 +18,10 @@ class SimpleDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx]
+
+def normal_img(img):
+    if len(img.shape) == 4:
+        if not img.shape[1] in [1,3,4]: return img.permute(0,3,1,2)
+    if len(img.shape) == 3:
+        if not img.shape[0] in [1,3,4]: return img.permute(2,0,1)
+
